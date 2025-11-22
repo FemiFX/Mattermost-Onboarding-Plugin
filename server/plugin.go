@@ -20,7 +20,7 @@ type Plugin struct {
 }
 
 const botUserKVKey = "onboarding:bot_user_id"
-const botUsername = "eoto-onboarding-assistant"
+const botUsername = "onboarding-assistant"
 const botDisplayName = "EOTO Onboarding Helper"
 const botDescription = "Guides new teammates through onboarding."
 const botIconPath = "assets/icon.png"
