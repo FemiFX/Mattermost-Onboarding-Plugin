@@ -79,14 +79,40 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 
 	return []*model.SlackAttachment{
 		{
-			Title: "Step 1: Update your profile",
-			Text:  checkbox(isDone("profile")) + " Add your photo, job title, and timezone.",
+			Title: "Step 1: Accounts & Access",
+			Text: checkbox(isDone("accounts")) + " Make sure you can sign in everywhere you need:\n" +
+				"- Google Workspace (EOTO email address issued & tested)\n" +
+				"- Nextcloud (files & shared team folders)\n" +
+				"- Timebutler (time tracking / attendance)\n" +
+				"- Mattermost (you’re here 🎉)\n" +
+				"- Any role-specific tools (e.g. CRM, finance tools)\n\n" +
+				"More details: [Accounts & Access Guide](https://outline.akinlosotu.tech)",
 			Actions: []*model.PostAction{
 				{
-					Name: "Open Profile",
+					Name: "Mark Accounts Ready",
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
-						// For now, just mark complete. You can later actually link to profile URL.
+						URL: callbackURL,
+						Context: map[string]interface{}{
+							"step": "accounts",
+						},
+					},
+				},
+			},
+		},
+		{
+			Title: "Step 2: Complete Your Profile",
+			Text: checkbox(isDone("profile")) + " Help colleagues recognise and reach you easily:\n" +
+				"- Upload a clear profile photo\n" +
+				"- Add your full name and pronouns (if you wish)\n" +
+				"- Set your job title & department\n" +
+				"- Set your timezone and working hours\n\n" +
+				"Quick reference: [Mattermost Profile & Notifications](https://outline.akinlosotu.tech)",
+			Actions: []*model.PostAction{
+				{
+					Name: "Mark Profile Complete",
+					Type: model.PostActionTypeButton,
+					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
 						Context: map[string]interface{}{
 							"step": "profile",
@@ -96,11 +122,16 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 			},
 		},
 		{
-			Title: "Step 2: Join key channels",
-			Text:  checkbox(isDone("channels")) + " Make sure you’re in #announcements and #helpdesk.",
+			Title: "Step 3: Communication Channels",
+			Text: checkbox(isDone("channels")) + " Join the spaces where information flows:\n" +
+				"- `#announcements` — organisation-wide updates\n" +
+				"- `#helpdesk` — IT support & quick questions\n" +
+				"- `#introductions` — say hello to everyone\n" +
+				"- Your team / project channels (ask your manager)\n\n" +
+				"Guidelines: [Communication & Channels](https://outline.akinlosotu.tech)",
 			Actions: []*model.PostAction{
 				{
-					Name: "Mark Step Complete",
+					Name: "Mark Channels Joined",
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
@@ -112,43 +143,59 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 			},
 		},
 		{
-			Title: "Step 3: Read the handbook",
-			Text:  checkbox(isDone("handbook")) + " Skim the internal handbook to understand how we work.",
+			Title: "Step 4: Tools & Equipment",
+			Text: checkbox(isDone("tools")) + " Confirm your hardware and core tools are ready:\n" +
+				"- Laptop received, boots correctly, and you can log in\n" +
+				"- Wi-Fi access at your usual working location(s)\n" +
+				"- Nextcloud client installed (if needed)\n" +
+				"- Email & calendar working on your primary device\n" +
+				"- Any required VPN or remote access configured\n\n" +
+				"See: [Devices & IT Setup](https://outline.akinlosotu.tech)",
 			Actions: []*model.PostAction{
 				{
-					Name: "Open Handbook",
+					Name: "Mark Tools Ready",
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
 						Context: map[string]interface{}{
-							"step": "handbook",
+							"step": "tools",
 						},
 					},
 				},
 			},
 		},
 		{
-			Title: "Step 4: Enable MFA",
-			Text:  checkbox(isDone("mfa")) + " Turn on multi-factor authentication for your account.",
+			Title: "Step 5: Working Practices & Policies",
+			Text: checkbox(isDone("policies")) + " Take a first pass through how we work at EOTO:\n" +
+				"- Working hours, flex-time, and time-off process\n" +
+				"- Data protection & privacy basics (GDPR awareness)\n" +
+				"- Communication expectations (response times, DM vs channels)\n" +
+				"- How we store and share files (Nextcloud structure)\n\n" +
+				"Start here: [EOTO Handbook](https://outline.akinlosotu.tech)",
 			Actions: []*model.PostAction{
 				{
-					Name: "Mark MFA Complete",
+					Name: "Mark Policies Reviewed",
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
 						Context: map[string]interface{}{
-							"step": "mfa",
+							"step": "policies",
 						},
 					},
 				},
 			},
 		},
 		{
-			Title: "Step 5: Meet your buddy",
-			Text:  checkbox(isDone("intro")) + " Schedule a quick intro with your onboarding buddy or manager.",
+			Title: "Step 6: People & Check-ins",
+			Text: checkbox(isDone("intro")) + " Make sure you’re connected to the right humans:\n" +
+				"- Short introduction post in `#introductions`\n" +
+				"- 1:1 intro with your manager (scheduled)\n" +
+				"- Check-in with your onboarding buddy (if assigned)\n" +
+				"- Add key people to your favorites in Mattermost\n\n" +
+				"Tips: [Onboarding & Collaboration at EOTO](https://outline.akinlosotu.tech)",
 			Actions: []*model.PostAction{
 				{
-					Name: "Mark Meeting Scheduled",
+					Name: "Mark Intros Done",
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,

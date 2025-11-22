@@ -1,0 +1,21 @@
+{
+  "id": "com.akinlosotustech.onboarding",
+  "name": "Onboarding Assistant",
+  "description": "Guided, personalized onboarding workflow for new users.",
+  "version": "0.1.0",
+  "min_server_version": "9.0.0",
+  "server": {
+    "executable": "server/dist/plugin-linux-amd64"
+  },
+  "settings_schema": {
+    "settings": [
+      {
+        "key": "WelcomeChannel",
+        "display_name": "Welcome Channel",
+        "type": "text",
+        "help_text": "Optional: public channel to post a welcome message (e.g. town-square).",
+        "default": "town-square"
+      }
+    ]
+  }
+}

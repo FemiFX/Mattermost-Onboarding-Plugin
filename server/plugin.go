@@ -20,7 +20,7 @@ type Plugin struct {
 }
 
 const botUserKVKey = "onboarding:bot_user_id"
-const botUsername = "eoto-onboarding"
+const botUsername = "eoto-onboarding-assistant"
 const botDisplayName = "EOTO Onboarding Helper"
 const botDescription = "Guides new teammates through onboarding."
 const botIconPath = "assets/icon.png"
@@ -37,11 +37,15 @@ func (p *Plugin) OnActivate() error {
 
 func (p *Plugin) ensureBotUser() error {
 	if p.botUserID != "" {
+		p.ensureBotProfile()
+		p.ensureBotIcon()
 		return nil
 	}
 
 	if storedID, err := p.loadBotUserID(); err == nil && storedID != "" {
 		p.botUserID = storedID
+		p.ensureBotProfile()
+		p.ensureBotIcon()
 		return nil
 	} else if err != nil {
 		return err
