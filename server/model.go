@@ -14,10 +14,11 @@ const (
 )
 
 var onboardingSteps = []string{
+	"accounts",
 	"profile",
 	"channels",
-	"handbook",
-	"mfa",
+	"tools",
+	"policies",
 	"intro",
 }
 
