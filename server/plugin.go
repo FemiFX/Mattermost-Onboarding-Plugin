@@ -20,7 +20,7 @@ type Plugin struct {
 }
 
 const botUserKVKey = "onboarding:bot_user_id"
-const botUsername = "onboarding-assistant"
+const botUsername = "eoto-onboarding"
 const botDisplayName = "EOTO Onboarding Helper"
 const botDescription = "Guides new teammates through onboarding."
 const botIconPath = "assets/icon.png"
@@ -133,7 +133,7 @@ func (p *Plugin) pluginURL() (string, error) {
 		return "", fmt.Errorf("parse siteURL: %w", err)
 	}
 
-	resolved, err := url.JoinPath(parsed.String(), "plugins", "com.aktech.onboarding")
+	resolved, err := url.JoinPath(parsed.String(), "plugins", "com.akinlosotutech.onboardinghelp")
 	if err != nil {
 		return "", fmt.Errorf("join plugin path: %w", err)
 	}
