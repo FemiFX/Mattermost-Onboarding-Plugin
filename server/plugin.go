@@ -133,7 +133,7 @@ func (p *Plugin) pluginURL() (string, error) {
 		return "", fmt.Errorf("parse siteURL: %w", err)
 	}
 
-	resolved, err := url.JoinPath(parsed.String(), "plugins", "com.permafx.onboarding")
+	resolved, err := url.JoinPath(parsed.String(), "plugins", "com.aktech.onboarding")
 	if err != nil {
 		return "", fmt.Errorf("join plugin path: %w", err)
 	}

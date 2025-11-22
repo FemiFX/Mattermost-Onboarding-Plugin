@@ -1,4 +1,4 @@
-PLUGIN_ID := com.akinlosotutech.onboarding
+PLUGIN_ID := com.aktech.onboarding
 PLUGIN_VERSION := $(shell jq -r .version plugin.json)
 SERVER_DIR := server
 DIST_DIR := dist
