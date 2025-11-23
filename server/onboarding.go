@@ -283,12 +283,37 @@ func (p *Plugin) handleCompleteStep(w http.ResponseWriter, r *http.Request) {
 	// Rebuild attachments to reflect updated checkboxes
 	attachments := p.buildChecklistAttachments(state)
 
-	// Respond with an ephemeral or updated message
+	// Get user info to rebuild welcome message
+	user, appErr := p.API.GetUser(userID)
+	if appErr != nil {
+		p.API.LogError("failed to get user", "err", appErr.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	displayName := user.GetFullName()
+	if displayName == "" {
+		displayName = user.Username
+	}
+
+	teamName := p.lookupPrimaryTeamName(user)
+
+	// Rebuild welcome message
+	welcomeMsg := fmt.Sprintf(
+		"👋 Hi %s, welcome to %s!\n\n"+
+			"I'm your onboarding assistant. I'll guide you through a few quick steps to get set up.\n\n"+
+			"_You can come back to this DM anytime to see your progress._",
+		displayName,
+		teamName,
+	)
+
+	// Respond with updated message that includes welcome text
 	resp := &model.PostActionIntegrationResponse{
 		Update: &model.Post{
 			Id:        req.PostId,
 			ChannelId: req.ChannelId,
 			UserId:    req.UserId,
+			Message:   welcomeMsg,
 			Props: map[string]interface{}{
 				"attachments": attachments,
 			},

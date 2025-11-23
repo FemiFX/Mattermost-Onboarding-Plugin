@@ -9,7 +9,7 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 )
 
-// handleSignatureDialog opens an interactive dialog for signature generation
+// handleSignatureDialog opens an interactive dialog for EOTO signature generation
 func (p *Plugin) handleSignatureDialog(w http.ResponseWriter, r *http.Request, req *model.PostActionIntegrationRequest) {
 	// Get user info to pre-fill form
 	user, appErr := p.API.GetUser(req.UserId)
@@ -30,38 +30,31 @@ func (p *Plugin) handleSignatureDialog(w http.ResponseWriter, r *http.Request, r
 		TriggerId: req.TriggerId,
 		URL:       callbackURL + "/submit-signature",
 		Dialog: model.Dialog{
-			Title:            "Generate Email Signature",
-			IntroductionText: "Fill in your details to generate your professional email signature:",
+			Title:            "Generate EOTO Email Signature",
+			IntroductionText: "Fill in your details to generate your EOTO email signature:",
 			Elements: []model.DialogElement{
 				{
 					DisplayName: "Full Name",
 					Name:        "full_name",
 					Type:        "text",
-					Placeholder: "John Doe",
+					Placeholder: "Max Mustermann",
 					Default:     user.GetFullName(),
+					HelpText:    "Your complete name as it should appear in the signature",
 				},
 				{
-					DisplayName: "Job Title",
-					Name:        "job_title",
+					DisplayName: "Position",
+					Name:        "position",
 					Type:        "text",
-					Placeholder: "Senior Software Engineer",
-					HelpText:    "Your role at EOTO",
+					Placeholder: "Projektkoordinator*in",
+					HelpText:    "Your job title or role at EOTO",
 				},
 				{
-					DisplayName: "Department",
-					Name:        "department",
-					Type:        "select",
-					Options: []*model.PostActionOptions{
-						{Text: "Engineering", Value: "Engineering"},
-						{Text: "Product", Value: "Product"},
-						{Text: "Design", Value: "Design"},
-						{Text: "Marketing", Value: "Marketing"},
-						{Text: "Sales", Value: "Sales"},
-						{Text: "Operations", Value: "Operations"},
-						{Text: "HR", Value: "HR"},
-						{Text: "Finance", Value: "Finance"},
-						{Text: "Executive", Value: "Executive"},
-					},
+					DisplayName: "Pronouns",
+					Name:        "pronouns",
+					Type:        "text",
+					Placeholder: "er/ihm / he/him",
+					Optional:    true,
+					HelpText:    "Format: 'er/ihm / he/him' or 'sie/ihr / she/her' or 'Keine Pronomen / No Pronouns'",
 				},
 				{
 					DisplayName: "Email",
@@ -69,40 +62,31 @@ func (p *Plugin) handleSignatureDialog(w http.ResponseWriter, r *http.Request, r
 					Type:        "text",
 					SubType:     "email",
 					Default:     user.Email,
+					HelpText:    "Your EOTO email address",
 				},
 				{
-					DisplayName: "Phone Number",
-					Name:        "phone",
+					DisplayName: "Project",
+					Name:        "project",
+					Type:        "select",
+					HelpText:    "Select the EOTO project you work for",
+					Options: []*model.PostActionOptions{
+						{Text: "Each One", Value: "each-one"},
+						{Text: "CommUnity", Value: "community"},
+						{Text: "CommUnity Zentrum (CUZ)", Value: "cuz"},
+						{Text: "Jugendangebote", Value: "jugend"},
+						{Text: "Netzwerk-Antirassismus (NAR)", Value: "nar"},
+						{Text: "Afrolution", Value: "afrolution"},
+					},
+					Default: "each-one",
+				},
+				{
+					DisplayName: "Work Number",
+					Name:        "work_number",
 					Type:        "text",
 					SubType:     "tel",
 					Optional:    true,
-					Placeholder: "+234 123 456 7890",
-				},
-				{
-					DisplayName: "LinkedIn Profile",
-					Name:        "linkedin",
-					Type:        "text",
-					SubType:     "url",
-					Optional:    true,
-					Placeholder: "https://linkedin.com/in/yourprofile",
-				},
-				{
-					DisplayName: "Include Company Logo",
-					Name:        "include_logo",
-					Type:        "bool",
-					Default:     "true",
-					HelpText:    "Add EOTO logo to signature",
-				},
-				{
-					DisplayName: "Signature Style",
-					Name:        "style",
-					Type:        "radio",
-					Options: []*model.PostActionOptions{
-						{Text: "Professional (Blue)", Value: "professional"},
-						{Text: "Modern (Green)", Value: "modern"},
-						{Text: "Minimalist (Black & White)", Value: "minimalist"},
-					},
-					Default: "professional",
+					Placeholder: "Tel.: 030 12345678",
+					HelpText:    "Your work phone number (optional, include 'Tel.:' prefix)",
 				},
 			},
 			SubmitLabel:    "Generate Signature",
@@ -118,13 +102,13 @@ func (p *Plugin) handleSignatureDialog(w http.ResponseWriter, r *http.Request, r
 
 	// Return success response
 	resp := &model.PostActionIntegrationResponse{
-		EphemeralText: "Opening signature generator...",
+		EphemeralText: "Opening EOTO signature generator...",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
 
-// handleSignatureSubmission processes the dialog submission and generates the signature
+// handleSignatureSubmission processes the dialog submission and generates the EOTO signature
 func (p *Plugin) handleSignatureSubmission(w http.ResponseWriter, r *http.Request) {
 	var submission model.SubmitDialogRequest
 	if err := json.NewDecoder(r.Body).Decode(&submission); err != nil {
@@ -138,43 +122,44 @@ func (p *Plugin) handleSignatureSubmission(w http.ResponseWriter, r *http.Reques
 
 	// Extract form data
 	fullName, _ := submission.Submission["full_name"].(string)
-	jobTitle, _ := submission.Submission["job_title"].(string)
-	department, _ := submission.Submission["department"].(string)
+	position, _ := submission.Submission["position"].(string)
+	pronouns, _ := submission.Submission["pronouns"].(string)
 	email, _ := submission.Submission["email"].(string)
-	phone, _ := submission.Submission["phone"].(string)
-	linkedin, _ := submission.Submission["linkedin"].(string)
-	includeLogoStr, _ := submission.Submission["include_logo"].(string)
-	style, _ := submission.Submission["style"].(string)
+	project, _ := submission.Submission["project"].(string)
+	workNumber, _ := submission.Submission["work_number"].(string)
 
 	// Validate required fields
-	if fullName == "" || jobTitle == "" || email == "" {
+	errors := make(map[string]string)
+	if fullName == "" {
+		errors["full_name"] = "Full name is required"
+	}
+	if position == "" {
+		errors["position"] = "Position is required"
+	}
+	if email == "" {
+		errors["email"] = "Email is required"
+	}
+	if project == "" {
+		errors["project"] = "Project is required"
+	}
+
+	if len(errors) > 0 {
 		resp := &model.SubmitDialogResponse{
-			Errors: map[string]string{
-				"full_name": "Full name is required",
-				"job_title": "Job title is required",
-				"email":     "Email is required",
-			},
+			Errors: errors,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
 
-	includeLogo := includeLogoStr == "true"
-
-	// Generate signature
+	// Generate signature using EOTO templates
 	signatureData := SignatureData{
-		FullName:    fullName,
-		JobTitle:    jobTitle,
-		Department:  department,
-		Email:       email,
-		Phone:       phone,
-		LinkedIn:    linkedin,
-		IncludeLogo: includeLogo,
-		Style:       style,
-		CompanyName: "EOTO",
-		CompanyURL:  "https://akinlosotu.tech",
-		LogoURL:     "https://akinlosotu.tech/logo.png",
+		FullName:   fullName,
+		Position:   position,
+		Pronouns:   pronouns,
+		Email:      email,
+		Project:    project,
+		WorkNumber: workNumber,
 	}
 
 	signatureHTML, err := GenerateSignature(signatureData)
@@ -190,7 +175,7 @@ func (p *Plugin) handleSignatureSubmission(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Upload HTML file to Mattermost
-	fileID, err := p.uploadSignatureFile(userID, channelID, signatureHTML, fullName)
+	fileID, err := p.uploadSignatureFile(userID, channelID, signatureHTML, fullName, project)
 	if err != nil {
 		p.API.LogError("failed to upload signature file", "err", err.Error())
 
@@ -214,17 +199,24 @@ func (p *Plugin) handleSignatureSubmission(w http.ResponseWriter, r *http.Reques
 		UserId:    p.botUserID,
 		ChannelId: dmChannel.Id,
 		Message: fmt.Sprintf(
-			"✅ **Email Signature Generated Successfully!**\n\n"+
-				"Hi %s, your email signature is ready to use.\n\n"+
+			"✅ **EOTO Email Signature Generated Successfully!**\n\n"+
+				"Hi %s, your email signature for **%s** is ready to use.\n\n"+
 				"**To use this signature:**\n"+
 				"1. Download the HTML file below\n"+
 				"2. Open it in a web browser\n"+
 				"3. Select all content (Ctrl+A / Cmd+A)\n"+
 				"4. Copy (Ctrl+C / Cmd+C)\n"+
 				"5. Paste into your email client's signature settings\n\n"+
-				"_Style: %s_",
+				"**For Outlook:**\n"+
+				"- Open Outlook → File → Options → Mail → Signatures\n"+
+				"- Create new signature, paste the copied content\n\n"+
+				"**For Thunderbird:**\n"+
+				"- Tools → Account Settings → Select your email → Attach signature from file\n"+
+				"- Choose the downloaded HTML file\n\n"+
+				"_Project: %s_",
 			fullName,
-			formatStyleName(style),
+			formatProjectName(project),
+			formatProjectName(project),
 		),
 		FileIds: []string{fileID},
 	}
@@ -239,10 +231,10 @@ func (p *Plugin) handleSignatureSubmission(w http.ResponseWriter, r *http.Reques
 }
 
 // uploadSignatureFile uploads the generated signature HTML to Mattermost
-func (p *Plugin) uploadSignatureFile(userID, channelID string, htmlContent, fullName string) (string, error) {
-	// Create filename
-	sanitizedName := strings.ReplaceAll(strings.ToLower(fullName), " ", "_")
-	filename := fmt.Sprintf("%s_email_signature.html", sanitizedName)
+func (p *Plugin) uploadSignatureFile(userID, channelID string, htmlContent, fullName, project string) (string, error) {
+	// Create filename matching Python app format: {name}_{project}_Signatur.html
+	sanitizedName := strings.ReplaceAll(fullName, " ", "_")
+	filename := fmt.Sprintf("%s_%s_Signatur.html", sanitizedName, project)
 
 	// Upload file
 	fileInfo, appErr := p.API.UploadFile(
@@ -257,14 +249,22 @@ func (p *Plugin) uploadSignatureFile(userID, channelID string, htmlContent, full
 	return fileInfo.Id, nil
 }
 
-// formatStyleName makes the style name more readable
-func formatStyleName(style string) string {
-	switch style {
-	case "modern":
-		return "Modern (Green)"
-	case "minimalist":
-		return "Minimalist (Black & White)"
+// formatProjectName makes the project name more readable
+func formatProjectName(project string) string {
+	switch project {
+	case "each-one":
+		return "Each One"
+	case "community":
+		return "CommUnity"
+	case "cuz":
+		return "CommUnity Zentrum (CUZ)"
+	case "jugend":
+		return "Jugendangebote"
+	case "nar":
+		return "Netzwerk-Antirassismus (NAR)"
+	case "afrolution":
+		return "Afrolution"
 	default:
-		return "Professional (Blue)"
+		return "Each One"
 	}
 }
