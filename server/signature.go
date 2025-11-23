@@ -26,70 +26,73 @@ func (p *Plugin) handleSignatureDialog(w http.ResponseWriter, r *http.Request, r
 		return
 	}
 
+	// Get translations
+	tr := p.getTranslations()
+
 	dialog := model.OpenDialogRequest{
 		TriggerId: req.TriggerId,
 		URL:       callbackURL + "/submit-signature",
 		Dialog: model.Dialog{
-			Title:            "Generate EOTO Email Signature",
-			IntroductionText: "Fill in your details to generate your EOTO email signature:",
+			Title:            tr.DialogSignatureTitle,
+			IntroductionText: tr.DialogSignatureIntro,
 			Elements: []model.DialogElement{
 				{
-					DisplayName: "Full Name",
+					DisplayName: tr.DialogFullName,
 					Name:        "full_name",
 					Type:        "text",
 					Placeholder: "Max Mustermann",
 					Default:     user.GetFullName(),
-					HelpText:    "Your complete name as it should appear in the signature",
+					HelpText:    tr.DialogFullNameHelp,
 				},
 				{
-					DisplayName: "Position",
+					DisplayName: tr.DialogPosition,
 					Name:        "position",
 					Type:        "text",
 					Placeholder: "Projektkoordinator*in",
-					HelpText:    "Your job title or role at EOTO",
+					HelpText:    tr.DialogPositionHelp,
 				},
 				{
-					DisplayName: "Pronouns",
+					DisplayName: tr.DialogPronouns,
 					Name:        "pronouns",
 					Type:        "text",
-					Placeholder: "er/ihm / he/him",
+					Placeholder: tr.DialogPronounsPlaceholder,
 					Optional:    true,
-					HelpText:    "Format: 'er/ihm / he/him' or 'sie/ihr / she/her' or 'Keine Pronomen / No Pronouns'",
+					HelpText:    tr.DialogPronounsHelp,
 				},
 				{
-					DisplayName: "Email",
+					DisplayName: tr.DialogEmail,
 					Name:        "email",
 					Type:        "text",
 					SubType:     "email",
 					Default:     user.Email,
-					HelpText:    "Your EOTO email address",
+					HelpText:    tr.DialogEmailHelp,
 				},
 				{
-					DisplayName: "Project",
+					DisplayName: tr.DialogProject,
 					Name:        "project",
 					Type:        "select",
-					HelpText:    "Select the EOTO project you work for",
+					HelpText:    tr.DialogProjectHelp,
 					Options: []*model.PostActionOptions{
-						{Text: "Each One", Value: "each-one"},
-						{Text: "CommUnity", Value: "community"},
-						{Text: "CommUnity Zentrum (CUZ)", Value: "cuz"},
-						{Text: "Jugendangebote", Value: "jugend"},
-						{Text: "Netzwerk-Antirassismus (NAR)", Value: "nar"},
-						{Text: "Afrolution", Value: "afrolution"},
+						{Text: tr.ProjectEachOne, Value: "each-one"},
+						{Text: tr.ProjectCommunity, Value: "community"},
+						{Text: tr.ProjectCUZ, Value: "cuz"},
+						{Text: tr.ProjectJugend, Value: "jugend"},
+						{Text: tr.ProjectNAR, Value: "nar"},
+						{Text: tr.ProjectAfrolution, Value: "afrolution"},
 					},
 					Default: "each-one",
 				},
 				{
-					DisplayName: "Work Number",
+					DisplayName: tr.DialogWorkNumber,
 					Name:        "work_number",
 					Type:        "text",
 					SubType:     "tel",
 					Optional:    true,
-					Placeholder: "Tel.: 030 12345678",
-					HelpText:    "Your work phone number (optional, include 'Tel.:' prefix)",
+					Placeholder: tr.DialogWorkNumberPlaceholder,
+					HelpText:    tr.DialogWorkNumberHelp,
 				},
 			},
-			SubmitLabel:    "Generate Signature",
+			SubmitLabel:    tr.DialogSubmitButton,
 			NotifyOnCancel: false,
 		},
 	}
@@ -102,7 +105,7 @@ func (p *Plugin) handleSignatureDialog(w http.ResponseWriter, r *http.Request, r
 
 	// Return success response
 	resp := &model.PostActionIntegrationResponse{
-		EphemeralText: "Opening EOTO signature generator...",
+		EphemeralText: tr.DialogOpening,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
@@ -194,30 +197,19 @@ func (p *Plugin) handleSignatureSubmission(w http.ResponseWriter, r *http.Reques
 		dmChannel = &model.Channel{Id: channelID} // Fallback to current channel
 	}
 
+	// Get translations
+	tr := p.getTranslations()
+
 	// Post message with download link
 	post := &model.Post{
 		UserId:    p.botUserID,
 		ChannelId: dmChannel.Id,
-		Message: fmt.Sprintf(
-			"✅ **EOTO Email Signature Generated Successfully!**\n\n"+
-				"Hi %s, your email signature for **%s** is ready to use.\n\n"+
-				"**To use this signature:**\n"+
-				"1. Download the HTML file below\n"+
-				"2. Open it in a web browser\n"+
-				"3. Select all content (Ctrl+A / Cmd+A)\n"+
-				"4. Copy (Ctrl+C / Cmd+C)\n"+
-				"5. Paste into your email client's signature settings\n\n"+
-				"**For Outlook:**\n"+
-				"- Open Outlook → File → Options → Mail → Signatures\n"+
-				"- Create new signature, paste the copied content\n\n"+
-				"**For Thunderbird:**\n"+
-				"- Tools → Account Settings → Select your email → Attach signature from file\n"+
-				"- Choose the downloaded HTML file\n\n"+
-				"_Project: %s_",
-			fullName,
-			formatProjectName(project),
-			formatProjectName(project),
-		),
+		Message: tr.SignatureGeneratedTitle + "\n\n" +
+			fmt.Sprintf(tr.SignatureGeneratedMessage, fullName, formatProjectName(project, &tr)) +
+			tr.SignatureInstructionsTitle +
+			tr.SignatureInstructionsOutlook +
+			tr.SignatureInstructionsThunderbird +
+			fmt.Sprintf("_Project: %s_", formatProjectName(project, &tr)),
 		FileIds: []string{fileID},
 	}
 
@@ -249,22 +241,22 @@ func (p *Plugin) uploadSignatureFile(userID, channelID string, htmlContent, full
 	return fileInfo.Id, nil
 }
 
-// formatProjectName makes the project name more readable
-func formatProjectName(project string) string {
+// formatProjectName makes the project name more readable using translations
+func formatProjectName(project string, tr *Translations) string {
 	switch project {
 	case "each-one":
-		return "Each One"
+		return tr.ProjectEachOne
 	case "community":
-		return "CommUnity"
+		return tr.ProjectCommunity
 	case "cuz":
-		return "CommUnity Zentrum (CUZ)"
+		return tr.ProjectCUZ
 	case "jugend":
-		return "Jugendangebote"
+		return tr.ProjectJugend
 	case "nar":
-		return "Netzwerk-Antirassismus (NAR)"
+		return tr.ProjectNAR
 	case "afrolution":
-		return "Afrolution"
+		return tr.ProjectAfrolution
 	default:
-		return "Each One"
+		return tr.ProjectEachOne
 	}
 }

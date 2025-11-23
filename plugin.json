@@ -2,13 +2,30 @@
   "id": "com.akinlosotutech.onboardinghelper",
   "name": "Onboarding Assistant",
   "description": "Guided, personalized onboarding workflow for new users.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "min_server_version": "9.0.0",
   "server": {
     "executable": "server/dist/plugin-linux-amd64"
   },
   "settings_schema": {
     "settings": [
+      {
+        "key": "Language",
+        "display_name": "Bot Language / Bot-Sprache",
+        "type": "dropdown",
+        "help_text": "Language for onboarding messages / Sprache für Onboarding-Nachrichten",
+        "default": "de",
+        "options": [
+          {
+            "display_name": "Deutsch",
+            "value": "de"
+          },
+          {
+            "display_name": "English",
+            "value": "en"
+          }
+        ]
+      },
       {
         "key": "WelcomeChannel",
         "display_name": "Welcome Channel",

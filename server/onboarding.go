@@ -41,13 +41,12 @@ func (p *Plugin) startOnboardingForUser(user *model.User) error {
 
 	teamName := p.lookupPrimaryTeamName(user)
 
-	welcomeMsg := fmt.Sprintf(
-		"👋 Hi %s, welcome to %s!\n\n"+
-			"I’m your onboarding assistant. I’ll guide you through a few quick steps to get set up.\n\n"+
-			"_You can come back to this DM anytime to see your progress._",
-		displayName,
-		teamName,
-	)
+	// Get translations
+	tr := p.getTranslations()
+
+	welcomeMsg := fmt.Sprintf(tr.WelcomeGreeting, displayName, teamName) + "\n\n" +
+		tr.WelcomeIntro + "\n\n" +
+		tr.WelcomeClosing
 
 	post := &model.Post{
 		UserId:    p.botUserID,
@@ -77,19 +76,16 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 		return state.CompletedSteps[step]
 	}
 
+	// Get translations
+	tr := p.getTranslations()
+
 	return []*model.SlackAttachment{
 		{
-			Title: "Step 1: Accounts & Access",
-			Text: checkbox(isDone("accounts")) + " Make sure you can sign in everywhere you need:\n" +
-				"- Google Workspace (EOTO email address issued & tested)\n" +
-				"- Nextcloud (files & shared team folders)\n" +
-				"- Timebutler (time tracking / attendance)\n" +
-				"- Mattermost (you’re here 🎉)\n" +
-				"- Any role-specific tools (e.g. CRM, finance tools)\n\n" +
-				"More details: [Accounts & Access Guide](https://outline.akinlosotu.tech)",
+			Title: tr.Step1Title,
+			Text:  checkbox(isDone("accounts")) + " " + tr.Step1Description + tr.Step1Link,
 			Actions: []*model.PostAction{
 				{
-					Name: "Mark Accounts Ready",
+					Name: tr.ButtonMarkAccountsReady,
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
@@ -101,17 +97,11 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 			},
 		},
 		{
-			Title: "Step 2: Complete Your Profile",
-			Text: checkbox(isDone("profile")) + " Help colleagues recognise and reach you easily:\n" +
-				"- Upload a clear profile photo\n" +
-				"- Add your full name and pronouns (if you wish)\n" +
-				"- Set your job title & department\n" +
-				"- Set your timezone and working hours\n" +
-				"- Generate your email signature ✉️\n\n" +
-				"Quick reference: [Mattermost Profile & Notifications](https://outline.akinlosotu.tech)",
+			Title: tr.Step2Title,
+			Text:  checkbox(isDone("profile")) + " " + tr.Step2Description + tr.Step2Link,
 			Actions: []*model.PostAction{
 				{
-					Name: "✉️ Generate Email Signature",
+					Name: tr.ButtonGenerateSignature,
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
@@ -121,7 +111,7 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 					},
 				},
 				{
-					Name: "Mark Profile Complete",
+					Name: tr.ButtonMarkProfileComplete,
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
@@ -133,16 +123,11 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 			},
 		},
 		{
-			Title: "Step 3: Communication Channels",
-			Text: checkbox(isDone("channels")) + " Join the spaces where information flows:\n" +
-				"- `#announcements` — organisation-wide updates\n" +
-				"- `#helpdesk` — IT support & quick questions\n" +
-				"- `#introductions` — say hello to everyone\n" +
-				"- Your team / project channels (ask your manager)\n\n" +
-				"Guidelines: [Communication & Channels](https://outline.akinlosotu.tech)",
+			Title: tr.Step3Title,
+			Text:  checkbox(isDone("channels")) + " " + tr.Step3Description + tr.Step3Link,
 			Actions: []*model.PostAction{
 				{
-					Name: "Mark Channels Joined",
+					Name: tr.ButtonMarkChannelsJoined,
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
@@ -154,17 +139,11 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 			},
 		},
 		{
-			Title: "Step 4: Tools & Equipment",
-			Text: checkbox(isDone("tools")) + " Confirm your hardware and core tools are ready:\n" +
-				"- Laptop received, boots correctly, and you can log in\n" +
-				"- Wi-Fi access at your usual working location(s)\n" +
-				"- Nextcloud client installed (if needed)\n" +
-				"- Email & calendar working on your primary device\n" +
-				"- Any required VPN or remote access configured\n\n" +
-				"See: [Devices & IT Setup](https://outline.akinlosotu.tech)",
+			Title: tr.Step4Title,
+			Text:  checkbox(isDone("tools")) + " " + tr.Step4Description + tr.Step4Link,
 			Actions: []*model.PostAction{
 				{
-					Name: "Mark Tools Ready",
+					Name: tr.ButtonMarkToolsReady,
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
@@ -176,16 +155,11 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 			},
 		},
 		{
-			Title: "Step 5: Working Practices & Policies",
-			Text: checkbox(isDone("policies")) + " Take a first pass through how we work at EOTO:\n" +
-				"- Working hours, flex-time, and time-off process\n" +
-				"- Data protection & privacy basics (GDPR awareness)\n" +
-				"- Communication expectations (response times, DM vs channels)\n" +
-				"- How we store and share files (Nextcloud structure)\n\n" +
-				"Start here: [EOTO Handbook](https://outline.akinlosotu.tech)",
+			Title: tr.Step5Title,
+			Text:  checkbox(isDone("policies")) + " " + tr.Step5Description + tr.Step5Link,
 			Actions: []*model.PostAction{
 				{
-					Name: "Mark Policies Reviewed",
+					Name: tr.ButtonMarkPoliciesReviewed,
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
@@ -197,16 +171,11 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 			},
 		},
 		{
-			Title: "Step 6: People & Check-ins",
-			Text: checkbox(isDone("intro")) + " Make sure you’re connected to the right humans:\n" +
-				"- Short introduction post in `#introductions`\n" +
-				"- 1:1 intro with your manager (scheduled)\n" +
-				"- Check-in with your onboarding buddy (if assigned)\n" +
-				"- Add key people to your favorites in Mattermost\n\n" +
-				"Tips: [Onboarding & Collaboration at EOTO](https://outline.akinlosotu.tech)",
+			Title: tr.Step6Title,
+			Text:  checkbox(isDone("intro")) + " " + tr.Step6Description + tr.Step6Link,
 			Actions: []*model.PostAction{
 				{
-					Name: "Mark Intros Done",
+					Name: tr.ButtonMarkIntrosDone,
 					Type: model.PostActionTypeButton,
 					Integration: &model.PostActionIntegration{
 						URL: callbackURL,
@@ -298,14 +267,13 @@ func (p *Plugin) handleCompleteStep(w http.ResponseWriter, r *http.Request) {
 
 	teamName := p.lookupPrimaryTeamName(user)
 
+	// Get translations
+	tr := p.getTranslations()
+
 	// Rebuild welcome message
-	welcomeMsg := fmt.Sprintf(
-		"👋 Hi %s, welcome to %s!\n\n"+
-			"I'm your onboarding assistant. I'll guide you through a few quick steps to get set up.\n\n"+
-			"_You can come back to this DM anytime to see your progress._",
-		displayName,
-		teamName,
-	)
+	welcomeMsg := fmt.Sprintf(tr.WelcomeGreeting, displayName, teamName) + "\n\n" +
+		tr.WelcomeIntro + "\n\n" +
+		tr.WelcomeClosing
 
 	// Respond with updated message that includes welcome text
 	resp := &model.PostActionIntegrationResponse{
@@ -318,7 +286,7 @@ func (p *Plugin) handleCompleteStep(w http.ResponseWriter, r *http.Request) {
 				"attachments": attachments,
 			},
 		},
-		EphemeralText: fmt.Sprintf("Marked step '%s' complete ✔️", step),
+		EphemeralText: fmt.Sprintf(tr.StepMarkedComplete, step),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
