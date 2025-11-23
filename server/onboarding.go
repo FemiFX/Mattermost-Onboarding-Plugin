@@ -106,9 +106,20 @@ func (p *Plugin) buildChecklistAttachments(state *OnboardingState) []*model.Slac
 				"- Upload a clear profile photo\n" +
 				"- Add your full name and pronouns (if you wish)\n" +
 				"- Set your job title & department\n" +
-				"- Set your timezone and working hours\n\n" +
+				"- Set your timezone and working hours\n" +
+				"- Generate your email signature ✉️\n\n" +
 				"Quick reference: [Mattermost Profile & Notifications](https://outline.akinlosotu.tech)",
 			Actions: []*model.PostAction{
+				{
+					Name: "✉️ Generate Email Signature",
+					Type: model.PostActionTypeButton,
+					Integration: &model.PostActionIntegration{
+						URL: callbackURL,
+						Context: map[string]interface{}{
+							"action": "open_signature_dialog",
+						},
+					},
+				},
 				{
 					Name: "Mark Profile Complete",
 					Type: model.PostActionTypeButton,
@@ -226,6 +237,16 @@ func (p *Plugin) handleCompleteStep(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := req.UserId
+
+	// Check if this is a signature generator action
+	if actionRaw, ok := req.Context["action"]; ok {
+		action, _ := actionRaw.(string)
+		if action == "open_signature_dialog" {
+			p.handleSignatureDialog(w, r, &req)
+			return
+		}
+	}
+
 	stepRaw, ok := req.Context["step"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)

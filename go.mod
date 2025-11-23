@@ -1,6 +1,6 @@
 module mm-onboarding-plugin
 
-go 1.25.4 
+go 1.25
 
 require github.com/mattermost/mattermost/server/public v0.1.21
 

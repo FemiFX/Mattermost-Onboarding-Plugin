@@ -20,7 +20,7 @@ type Plugin struct {
 }
 
 const botUserKVKey = "onboarding:bot_user_id"
-const botUsername = "eoto-onboarding"
+const botUsername = "eoto-onboarding-bot"
 const botDisplayName = "EOTO Onboarding Helper"
 const botDescription = "Guides new teammates through onboarding."
 const botIconPath = "assets/icon.png"
@@ -116,6 +116,8 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	switch r.URL.Path {
 	case "/complete-step":
 		p.handleCompleteStep(w, r)
+	case "/submit-signature":
+		p.handleSignatureSubmission(w, r)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
@@ -133,7 +135,7 @@ func (p *Plugin) pluginURL() (string, error) {
 		return "", fmt.Errorf("parse siteURL: %w", err)
 	}
 
-	resolved, err := url.JoinPath(parsed.String(), "plugins", "com.akinlosotutech.onboardinghelp")
+	resolved, err := url.JoinPath(parsed.String(), "plugins", "com.akinlosotutech.onboardinghelper")
 	if err != nil {
 		return "", fmt.Errorf("join plugin path: %w", err)
 	}
